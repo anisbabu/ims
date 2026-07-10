@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { Fee, FeeSummary, Page, Student } from "@/lib/types";
 import { PAYMENT_METHODS } from "@/lib/types";
+import { DetailModal } from "@/components/DetailModal";
+
+interface Payment { id: string; amount: number; method: string; reference?: string; paidOn?: string }
 
 export default function FeesPage() {
   const qc = useQueryClient();
@@ -98,9 +102,16 @@ export default function FeesPage() {
 
 function FeeRow({ fee, name, onChange }: { fee: Fee; name: string; onChange: () => void }) {
   const [open, setOpen] = useState(false);
+  const [view, setView] = useState(false);
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("CASH");
   const [err, setErr] = useState<string | null>(null);
+
+  const payments = useQuery({
+    queryKey: ["payments", fee.id],
+    queryFn: () => api<Payment[]>(`/fees/${fee.id}/payments`),
+    enabled: view,
+  });
 
   const pay = useMutation({
     mutationFn: () => api(`/fees/${fee.id}/payments`, { method: "POST", body: JSON.stringify({ amount: Number(amount), method }) }),
@@ -122,9 +133,10 @@ function FeeRow({ fee, name, onChange }: { fee: Fee; name: string; onChange: () 
         <td className="td">{fee.paidAmount}</td>
         <td className="td">{fee.dueAmount}</td>
         <td className={"td font-medium " + color}>{fee.status}</td>
-        <td className="td">
+        <td className="td space-x-2 whitespace-nowrap">
+          <button className="text-xs text-slate-600 hover:underline" onClick={() => setView(true)}>View</button>
           {fee.status !== "PAID" && fee.status !== "WAIVED" && (
-            <button className="btn-ghost" onClick={() => setOpen(!open)}>Pay</button>
+            <button className="text-xs text-indigo-600" onClick={() => setOpen(!open)}>Pay</button>
           )}
         </td>
       </tr>
@@ -142,6 +154,43 @@ function FeeRow({ fee, name, onChange }: { fee: Fee; name: string; onChange: () 
           </td>
         </tr>
       )}
+      {view && (
+        <DetailModalPortal>
+          <DetailModal
+            title={fee.title}
+            subtitle={`Fee for ${name} · ${fee.status}`}
+            onClose={() => setView(false)}
+            fields={[
+              { label: "Student", value: name },
+              { label: "Title", value: fee.title },
+              { label: "Amount", value: fee.amount },
+              { label: "Paid", value: fee.paidAmount },
+              { label: "Due", value: fee.dueAmount },
+              { label: "Due date", value: fee.dueDate },
+              { label: "Status", value: fee.status },
+            ]}
+          >
+            <div className="overflow-x-auto">
+              <h3 className="mb-2 text-sm font-semibold text-slate-700">Payments</h3>
+              <table className="min-w-full divide-y divide-slate-200">
+                <thead><tr><th className="th">Date</th><th className="th text-right">Amount</th><th className="th">Method</th><th className="th">Reference</th></tr></thead>
+                <tbody className="divide-y divide-slate-100">
+                  {payments.data?.map((p) => (
+                    <tr key={p.id}><td className="td">{p.paidOn ?? "—"}</td><td className="td text-right">{p.amount}</td><td className="td">{p.method}</td><td className="td">{p.reference ?? "—"}</td></tr>
+                  ))}
+                  {payments.data?.length === 0 && <tr><td className="td text-slate-400" colSpan={4}>No payments.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </DetailModal>
+        </DetailModalPortal>
+      )}
     </>
   );
+}
+
+/** Portals modal to document.body so it isn't an invalid child of <tbody>. */
+function DetailModalPortal({ children }: { children: React.ReactNode }) {
+  if (typeof document === "undefined") return null;
+  return createPortal(children, document.body);
 }

@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { AppUser, Page, Role } from "@/lib/types";
 import { useMe } from "@/lib/hooks";
+import { DetailModal } from "@/components/DetailModal";
 
 export default function UsersPage() {
   const { data: me } = useMe();
@@ -17,6 +18,7 @@ export default function UsersPage() {
 
   const [form, setForm] = useState({ email: "", password: "", fullName: "", role: "TEACHER", instituteId: "" });
   const [err, setErr] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<AppUser | null>(null);
 
   const create = useMutation({
     mutationFn: () => api("/users", {
@@ -60,17 +62,34 @@ export default function UsersPage() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {list.data?.content.map((u) => (
-              <UserRow key={u.id} user={u} roles={roles.data ?? []} selfId={me?.id} onChange={() => qc.invalidateQueries({ queryKey: ["users"] })} />
+              <UserRow key={u.id} user={u} roles={roles.data ?? []} selfId={me?.id} onView={() => setViewing(u)} onChange={() => qc.invalidateQueries({ queryKey: ["users"] })} />
             ))}
             {list.data && list.data.content.length === 0 && <tr><td className="td text-slate-400" colSpan={5}>No users.</td></tr>}
           </tbody>
         </table>
       </div>
+
+      {viewing && (
+        <DetailModal
+          title={viewing.fullName}
+          subtitle={`User · ${viewing.role} · ${viewing.status}`}
+          onClose={() => setViewing(null)}
+          fields={[
+            { label: "Full name", value: viewing.fullName },
+            { label: "Email", value: viewing.email },
+            { label: "Role", value: viewing.role },
+            { label: "Status", value: viewing.status },
+            { label: "Institute ID", value: viewing.instituteId },
+            { label: "Profile ID", value: viewing.profileId },
+            { label: "Created", value: viewing.createdAt },
+          ]}
+        />
+      )}
     </div>
   );
 }
 
-function UserRow({ user, roles, selfId, onChange }: { user: AppUser; roles: Role[]; selfId?: string; onChange: () => void }) {
+function UserRow({ user, roles, selfId, onView, onChange }: { user: AppUser; roles: Role[]; selfId?: string; onView: () => void; onChange: () => void }) {
   const [pwOpen, setPwOpen] = useState(false);
   const [pw, setPw] = useState("");
   const [err, setErr] = useState<string | null>(null);
@@ -106,6 +125,7 @@ function UserRow({ user, roles, selfId, onChange }: { user: AppUser; roles: Role
         </td>
         <td className={"td font-medium " + (user.status === "ACTIVE" ? "text-emerald-600" : "text-red-600")}>{user.status}</td>
         <td className="td space-x-2 whitespace-nowrap">
+          <button className="text-xs text-slate-600 hover:underline" onClick={onView}>View</button>
           <button className="text-xs text-indigo-600" onClick={() => setPwOpen(!pwOpen)}>Reset pw</button>
           {!isSelf && <button className="text-xs text-amber-600" onClick={() => toggle.mutate()}>{user.status === "ACTIVE" ? "Disable" : "Enable"}</button>}
           {!isSelf && <button className="text-xs text-red-600" onClick={() => { if (confirm("Delete user?")) del.mutate(); }}>Delete</button>}

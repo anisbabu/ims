@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, downloadFile } from "@/lib/api";
 import type { Certificate, Page, Student } from "@/lib/types";
 import { CERTIFICATE_TYPES } from "@/lib/types";
+import { DetailModal } from "@/components/DetailModal";
 
 export default function CertificatesPage() {
   const qc = useQueryClient();
@@ -12,6 +13,7 @@ export default function CertificatesPage() {
   const list = useQuery({ queryKey: ["certificates"], queryFn: () => api<Page<Certificate>>("/certificates?size=50") });
   const [form, setForm] = useState({ studentId: "", type: "MARKSHEET", title: "", serialNo: "", content: "" });
   const [err, setErr] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<Certificate | null>(null);
 
   const issue = useMutation({
     mutationFn: () => api("/certificates", { method: "POST", body: JSON.stringify(form) }),
@@ -74,7 +76,8 @@ export default function CertificatesPage() {
                 <td className="td">{c.type}</td>
                 <td className="td">{c.title}</td>
                 <td className="td">{c.issueDate ?? "—"}</td>
-                <td className="td">
+                <td className="td space-x-2 whitespace-nowrap">
+                  <button className="text-xs text-slate-600 hover:underline" onClick={() => setViewing(c)}>View</button>
                   <button
                     className="text-xs font-medium text-indigo-600 hover:underline"
                     onClick={() => downloadFile(`/certificates/${c.id}/pdf`, `certificate-${c.serialNo ?? c.id}.pdf`)}
@@ -90,6 +93,26 @@ export default function CertificatesPage() {
           </tbody>
         </table>
       </div>
+
+      {viewing && (
+        <DetailModal
+          title={viewing.title}
+          subtitle={`Certificate · ${viewing.type}`}
+          onClose={() => setViewing(null)}
+          fields={[
+            { label: "Student", value: studentName(viewing.studentId) },
+            { label: "Type", value: viewing.type },
+            { label: "Serial no", value: viewing.serialNo },
+            { label: "Title", value: viewing.title },
+            { label: "Issue date", value: viewing.issueDate },
+          ]}
+        >
+          <div>
+            <h3 className="mb-1 text-sm font-semibold text-slate-700">Content</h3>
+            <p className="whitespace-pre-wrap text-sm text-slate-700">{viewing.content || "—"}</p>
+          </div>
+        </DetailModal>
+      )}
     </div>
   );
 }

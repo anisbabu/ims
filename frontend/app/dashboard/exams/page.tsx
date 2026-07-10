@@ -14,6 +14,7 @@ import type {
   Subject,
 } from "@/lib/types";
 import { EXAM_STATUSES } from "@/lib/types";
+import { DetailModal } from "@/components/DetailModal";
 
 export default function ExamsPage() {
   return (
@@ -85,6 +86,7 @@ function Exams() {
   const list = useQuery({ queryKey: ["exams"], queryFn: () => api<Page<Exam>>("/exams?size=50") });
   const [form, setForm] = useState({ name: "", examTypeId: "", academicYearId: "", gradeId: "" });
   const [err, setErr] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<Exam | null>(null);
 
   const create = useMutation({
     mutationFn: () => api("/exams", { method: "POST", body: JSON.stringify({ ...form, gradeId: form.gradeId || null }) }),
@@ -119,7 +121,7 @@ function Exams() {
       </form>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-slate-200">
-          <thead><tr><th className="th">Exam</th><th className="th">Status</th></tr></thead>
+          <thead><tr><th className="th">Exam</th><th className="th">Status</th><th className="th"></th></tr></thead>
           <tbody className="divide-y divide-slate-100">
             {list.data?.content.map((x) => (
               <tr key={x.id}>
@@ -129,12 +131,30 @@ function Exams() {
                     {EXAM_STATUSES.map((s) => <option key={s}>{s}</option>)}
                   </select>
                 </td>
+                <td className="td"><button className="text-xs text-slate-600 hover:underline" onClick={() => setViewing(x)}>View</button></td>
               </tr>
             ))}
-            {list.data?.content.length === 0 && <tr><td className="td text-slate-400" colSpan={2}>No exams yet.</td></tr>}
+            {list.data?.content.length === 0 && <tr><td className="td text-slate-400" colSpan={3}>No exams yet.</td></tr>}
           </tbody>
         </table>
       </div>
+
+      {viewing && (
+        <DetailModal
+          title={viewing.name}
+          subtitle={`Exam · ${viewing.status}`}
+          onClose={() => setViewing(null)}
+          fields={[
+            { label: "Name", value: viewing.name },
+            { label: "Exam type", value: types.data?.find((t) => t.id === viewing.examTypeId)?.name },
+            { label: "Academic year", value: years.data?.find((y) => y.id === viewing.academicYearId)?.name },
+            { label: "Grade", value: grades.data?.find((g) => g.id === viewing.gradeId)?.name },
+            { label: "Start date", value: viewing.startDate },
+            { label: "End date", value: viewing.endDate },
+            { label: "Status", value: viewing.status },
+          ]}
+        />
+      )}
     </section>
   );
 }

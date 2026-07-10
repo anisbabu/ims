@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { FinancialYear, LedgerAccount } from "@/lib/types";
 import { ACCOUNT_TYPES } from "@/lib/types";
+import { DetailModal } from "@/components/DetailModal";
 
 export default function AccountsPage() {
   return (
@@ -74,6 +75,7 @@ function ChartOfAccounts() {
   const list = useQuery({ queryKey: ["accounts"], queryFn: () => api<LedgerAccount[]>("/accounting/accounts") });
   const [form, setForm] = useState({ code: "", name: "", type: "ASSET" });
   const [err, setErr] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<LedgerAccount | null>(null);
 
   const create = useMutation({
     mutationFn: () => api("/accounting/accounts", { method: "POST", body: JSON.stringify(form) }),
@@ -100,7 +102,7 @@ function ChartOfAccounts() {
       </form>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-slate-200">
-          <thead><tr><th className="th">Code</th><th className="th">Name</th><th className="th">Type</th><th className="th">System</th></tr></thead>
+          <thead><tr><th className="th">Code</th><th className="th">Name</th><th className="th">Type</th><th className="th">System</th><th className="th"></th></tr></thead>
           <tbody className="divide-y divide-slate-100">
             {list.data?.map((a) => (
               <tr key={a.id}>
@@ -108,11 +110,27 @@ function ChartOfAccounts() {
                 <td className="td font-medium">{a.name}</td>
                 <td className={"td font-medium " + (typeColor[a.type] ?? "")}>{a.type}</td>
                 <td className="td text-xs text-slate-500">{a.systemKey ?? "—"}</td>
+                <td className="td"><button className="text-xs text-slate-600 hover:underline" onClick={() => setViewing(a)}>View</button></td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {viewing && (
+        <DetailModal
+          title={`${viewing.code} · ${viewing.name}`}
+          subtitle={`Account · ${viewing.type}`}
+          onClose={() => setViewing(null)}
+          fields={[
+            { label: "Code", value: viewing.code },
+            { label: "Name", value: viewing.name },
+            { label: "Type", value: viewing.type },
+            { label: "System key", value: viewing.systemKey },
+            { label: "Active", value: viewing.active ? "Yes" : "No" },
+          ]}
+        />
+      )}
     </section>
   );
 }

@@ -5,10 +5,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { AcademicYear, Admission, Grade, Page, Section, Student } from "@/lib/types";
 import { ADMISSION_STATUSES } from "@/lib/types";
+import { DetailModal } from "@/components/DetailModal";
 
 export default function AdmissionsPage() {
   const qc = useQueryClient();
   const [err, setErr] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<Admission | null>(null);
   const students = useQuery({ queryKey: ["students-all"], queryFn: () => api<Page<Student>>("/students?size=100") });
   const years = useQuery({ queryKey: ["years"], queryFn: () => api<AcademicYear[]>("/academic-years") });
   const grades = useQuery({ queryKey: ["grades"], queryFn: () => api<Grade[]>("/grades") });
@@ -79,7 +81,7 @@ export default function AdmissionsPage() {
       <div className="card overflow-x-auto p-0">
         <table className="min-w-full divide-y divide-slate-200">
           <thead className="bg-slate-50">
-            <tr><th className="th">Student</th><th className="th">Adm No</th><th className="th">Status</th><th className="th">Change</th></tr>
+            <tr><th className="th">Student</th><th className="th">Adm No</th><th className="th">Status</th><th className="th">Change</th><th className="th"></th></tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {list.data?.content.map((a) => (
@@ -93,14 +95,32 @@ export default function AdmissionsPage() {
                     {ADMISSION_STATUSES.map((s) => <option key={s}>{s}</option>)}
                   </select>
                 </td>
+                <td className="td"><button className="text-xs text-slate-600 hover:underline" onClick={() => setViewing(a)}>View</button></td>
               </tr>
             ))}
             {list.data && list.data.content.length === 0 && (
-              <tr><td className="td text-slate-400" colSpan={4}>No admissions yet.</td></tr>
+              <tr><td className="td text-slate-400" colSpan={5}>No admissions yet.</td></tr>
             )}
           </tbody>
         </table>
       </div>
+
+      {viewing && (
+        <DetailModal
+          title={studentName(viewing.studentId)}
+          subtitle={`Admission · ${viewing.status}`}
+          onClose={() => setViewing(null)}
+          fields={[
+            { label: "Student", value: studentName(viewing.studentId) },
+            { label: "Admission no", value: viewing.admissionNo },
+            { label: "Academic year", value: years.data?.find((y) => y.id === viewing.academicYearId)?.name },
+            { label: "Grade", value: grades.data?.find((g) => g.id === viewing.gradeId)?.name },
+            { label: "Section", value: sections.data?.find((s) => s.id === viewing.sectionId)?.name },
+            { label: "Admission date", value: viewing.admissionDate },
+            { label: "Status", value: viewing.status },
+          ]}
+        />
+      )}
     </div>
   );
 }

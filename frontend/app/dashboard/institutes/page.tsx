@@ -5,11 +5,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { Page } from "@/lib/types";
 import { useMe } from "@/lib/hooks";
+import { DetailModal } from "@/components/DetailModal";
 
 interface Institute {
   id: string;
   name: string;
   code: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  logoUrl?: string;
+  settings?: string;
   status: string;
 }
 
@@ -17,6 +23,7 @@ export default function InstitutesPage() {
   const { data: me } = useMe();
   const qc = useQueryClient();
   const [err, setErr] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<Institute | null>(null);
   const [form, setForm] = useState({
     name: "", code: "", adminEmail: "", adminPassword: "", adminFullName: "",
   });
@@ -84,7 +91,7 @@ export default function InstitutesPage() {
       <div className="card overflow-x-auto p-0">
         <table className="min-w-full divide-y divide-slate-200">
           <thead className="bg-slate-50">
-            <tr><th className="th">Name</th><th className="th">Code</th><th className="th">Status</th></tr>
+            <tr><th className="th">Name</th><th className="th">Code</th><th className="th">Status</th><th className="th"></th></tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {list.data?.content.map((i) => (
@@ -92,14 +99,33 @@ export default function InstitutesPage() {
                 <td className="td font-medium">{i.name}</td>
                 <td className="td">{i.code}</td>
                 <td className="td">{i.status}</td>
+                <td className="td"><button className="text-xs text-slate-600 hover:underline" onClick={() => setViewing(i)}>View</button></td>
               </tr>
             ))}
             {list.data && list.data.content.length === 0 && (
-              <tr><td className="td text-slate-400" colSpan={3}>No institutes yet.</td></tr>
+              <tr><td className="td text-slate-400" colSpan={4}>No institutes yet.</td></tr>
             )}
           </tbody>
         </table>
       </div>
+
+      {viewing && (
+        <DetailModal
+          title={viewing.name}
+          subtitle={`Institute · ${viewing.code} · ${viewing.status}`}
+          onClose={() => setViewing(null)}
+          fields={[
+            { label: "Name", value: viewing.name },
+            { label: "Code", value: viewing.code },
+            { label: "Status", value: viewing.status },
+            { label: "Phone", value: viewing.phone },
+            { label: "Email", value: viewing.email },
+            { label: "Address", value: viewing.address },
+            { label: "Logo URL", value: viewing.logoUrl },
+            { label: "Settings", value: viewing.settings },
+          ]}
+        />
+      )}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { FinancialYear, Journal, LedgerAccount, Page } from "@/lib/types";
+import { DetailModal } from "@/components/DetailModal";
 
 type Line = { accountId: string; debit: string; credit: string; memo: string };
 const emptyLine = (): Line => ({ accountId: "", debit: "", credit: "", memo: "" });
@@ -22,6 +23,7 @@ export default function JournalsPage() {
   const [lines, setLines] = useState<Line[]>([emptyLine(), emptyLine()]);
   const [post, setPost] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<Journal | null>(null);
 
   const list = useQuery({
     queryKey: ["journals", activeFy],
@@ -117,13 +119,49 @@ export default function JournalsPage() {
                 <td className="td">{j.totalDebit}</td>
                 <td className="td text-xs">{j.source}</td>
                 <td className={"td font-medium " + (j.posted ? "text-emerald-600" : "text-amber-600")}>{j.posted ? "Posted" : "Draft"}</td>
-                <td className="td">{!j.posted && <button className="text-xs text-indigo-600" onClick={() => postMut.mutate(j.id)}>Post</button>}</td>
+                <td className="td space-x-2 whitespace-nowrap">
+                  <button className="text-xs text-slate-600 hover:underline" onClick={() => setViewing(j)}>View</button>
+                  {!j.posted && <button className="text-xs text-indigo-600" onClick={() => postMut.mutate(j.id)}>Post</button>}
+                </td>
               </tr>
             ))}
             {list.data && list.data.content.length === 0 && <tr><td className="td text-slate-400" colSpan={7}>No journals yet.</td></tr>}
           </tbody>
         </table>
       </div>
+
+      {viewing && (
+        <DetailModal
+          title={`Journal ${viewing.reference ?? ""}`.trim()}
+          subtitle={`${viewing.entryDate} · ${viewing.source} · ${viewing.posted ? "Posted" : "Draft"}`}
+          onClose={() => setViewing(null)}
+          fields={[
+            { label: "Date", value: viewing.entryDate },
+            { label: "Reference", value: viewing.reference },
+            { label: "Source", value: viewing.source + (viewing.sourceType ? ` (${viewing.sourceType})` : "") },
+            { label: "Narration", value: viewing.narration },
+            { label: "Total debit", value: viewing.totalDebit },
+            { label: "Total credit", value: viewing.totalCredit },
+          ]}
+        >
+          <div className="overflow-x-auto">
+            <h3 className="mb-2 text-sm font-semibold text-slate-700">Lines</h3>
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead><tr><th className="th">Account</th><th className="th text-right">Debit</th><th className="th text-right">Credit</th><th className="th">Memo</th></tr></thead>
+              <tbody className="divide-y divide-slate-100">
+                {viewing.lines.map((l) => (
+                  <tr key={l.id}>
+                    <td className="td"><span className="font-mono">{l.accountCode}</span> {l.accountName}</td>
+                    <td className="td text-right">{l.debit ? l.debit : ""}</td>
+                    <td className="td text-right">{l.credit ? l.credit : ""}</td>
+                    <td className="td">{l.memo ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </DetailModal>
+      )}
     </div>
   );
 }
