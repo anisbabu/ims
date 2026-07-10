@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { Page, Student, TransportAssignment, TransportRoute, Vehicle } from "@/lib/types";
+import { DetailModal } from "@/components/DetailModal";
 
 export default function TransportPage() {
   return (
@@ -21,6 +22,7 @@ function Vehicles() {
   const list = useQuery({ queryKey: ["vehicles"], queryFn: () => api<Vehicle[]>("/transport/vehicles") });
   const [form, setForm] = useState({ regNo: "", model: "", capacity: "40", driverName: "", driverPhone: "" });
   const [err, setErr] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<Vehicle | null>(null);
   const create = useMutation({
     mutationFn: () => api("/transport/vehicles", { method: "POST", body: JSON.stringify({ ...form, capacity: Number(form.capacity) }) }),
     onSuccess: () => { setForm({ regNo: "", model: "", capacity: "40", driverName: "", driverPhone: "" }); setErr(null); qc.invalidateQueries({ queryKey: ["vehicles"] }); },
@@ -47,13 +49,31 @@ function Vehicles() {
             {list.data?.map((v) => (
               <tr key={v.id}>
                 <td className="td font-medium">{v.regNo}</td><td className="td">{v.model ?? "—"}</td><td className="td">{v.capacity}</td><td className="td">{v.driverName ?? "—"}{v.driverPhone ? ` · ${v.driverPhone}` : ""}</td>
-                <td className="td"><button className="text-xs text-red-600" onClick={() => { if (confirm("Delete vehicle?")) del.mutate(v.id); }}>Delete</button></td>
+                <td className="td space-x-2 whitespace-nowrap">
+                  <button className="text-xs text-slate-600 hover:underline" onClick={() => setViewing(v)}>View</button>
+                  <button className="text-xs text-red-600" onClick={() => { if (confirm("Delete vehicle?")) del.mutate(v.id); }}>Delete</button>
+                </td>
               </tr>
             ))}
             {list.data?.length === 0 && <tr><td className="td text-slate-400" colSpan={5}>None yet.</td></tr>}
           </tbody>
         </table>
       </div>
+
+      {viewing && (
+        <DetailModal
+          title={viewing.regNo}
+          subtitle="Vehicle"
+          onClose={() => setViewing(null)}
+          fields={[
+            { label: "Reg no", value: viewing.regNo },
+            { label: "Model", value: viewing.model },
+            { label: "Capacity", value: viewing.capacity },
+            { label: "Driver", value: viewing.driverName },
+            { label: "Driver phone", value: viewing.driverPhone },
+          ]}
+        />
+      )}
     </section>
   );
 }
@@ -64,6 +84,7 @@ function Routes() {
   const list = useQuery({ queryKey: ["routes"], queryFn: () => api<TransportRoute[]>("/transport/routes") });
   const [form, setForm] = useState({ name: "", stops: "", fare: "", vehicleId: "" });
   const [err, setErr] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<TransportRoute | null>(null);
   const create = useMutation({
     mutationFn: () => api("/transport/routes", { method: "POST", body: JSON.stringify({ name: form.name, stops: form.stops, fare: form.fare ? Number(form.fare) : null, vehicleId: form.vehicleId || null }) }),
     onSuccess: () => { setForm({ name: "", stops: "", fare: "", vehicleId: "" }); setErr(null); qc.invalidateQueries({ queryKey: ["routes"] }); },
@@ -93,13 +114,30 @@ function Routes() {
             {list.data?.map((r) => (
               <tr key={r.id}>
                 <td className="td font-medium">{r.name}</td><td className="td">{r.stops ?? "—"}</td><td className="td">{r.fare ?? "—"}</td><td className="td">{vehReg(r.vehicleId)}</td>
-                <td className="td"><button className="text-xs text-red-600" onClick={() => { if (confirm("Delete route?")) del.mutate(r.id); }}>Delete</button></td>
+                <td className="td space-x-2 whitespace-nowrap">
+                  <button className="text-xs text-slate-600 hover:underline" onClick={() => setViewing(r)}>View</button>
+                  <button className="text-xs text-red-600" onClick={() => { if (confirm("Delete route?")) del.mutate(r.id); }}>Delete</button>
+                </td>
               </tr>
             ))}
             {list.data?.length === 0 && <tr><td className="td text-slate-400" colSpan={5}>None yet.</td></tr>}
           </tbody>
         </table>
       </div>
+
+      {viewing && (
+        <DetailModal
+          title={viewing.name}
+          subtitle="Route"
+          onClose={() => setViewing(null)}
+          fields={[
+            { label: "Name", value: viewing.name },
+            { label: "Stops", value: viewing.stops },
+            { label: "Fare", value: viewing.fare },
+            { label: "Vehicle", value: vehReg(viewing.vehicleId) },
+          ]}
+        />
+      )}
     </section>
   );
 }
@@ -111,6 +149,7 @@ function Assignments() {
   const list = useQuery({ queryKey: ["assignments"], queryFn: () => api<Page<TransportAssignment>>("/transport/assignments?size=50") });
   const [form, setForm] = useState({ studentId: "", routeId: "", stopName: "" });
   const [err, setErr] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<TransportAssignment | null>(null);
 
   const assign = useMutation({
     mutationFn: () => api("/transport/assignments", { method: "POST", body: JSON.stringify(form) }),
@@ -149,13 +188,32 @@ function Assignments() {
               <tr key={a.id}>
                 <td className="td font-medium">{stuName(a.studentId)}</td><td className="td">{routeName(a.routeId)}</td><td className="td">{a.stopName ?? "—"}</td>
                 <td className={"td font-medium " + (a.status === "ACTIVE" ? "text-emerald-600" : "text-slate-500")}>{a.status}</td>
-                <td className="td">{a.status === "ACTIVE" && <button className="text-xs text-indigo-600" onClick={() => end.mutate(a.id)}>End</button>}</td>
+                <td className="td space-x-2 whitespace-nowrap">
+                  <button className="text-xs text-slate-600 hover:underline" onClick={() => setViewing(a)}>View</button>
+                  {a.status === "ACTIVE" && <button className="text-xs text-indigo-600" onClick={() => end.mutate(a.id)}>End</button>}
+                </td>
               </tr>
             ))}
             {list.data?.content.length === 0 && <tr><td className="td text-slate-400" colSpan={5}>No assignments.</td></tr>}
           </tbody>
         </table>
       </div>
+
+      {viewing && (
+        <DetailModal
+          title={stuName(viewing.studentId)}
+          subtitle={`Transport assignment · ${viewing.status}`}
+          onClose={() => setViewing(null)}
+          fields={[
+            { label: "Student", value: stuName(viewing.studentId) },
+            { label: "Route", value: routeName(viewing.routeId) },
+            { label: "Stop", value: viewing.stopName },
+            { label: "Assigned date", value: viewing.assignedDate },
+            { label: "End date", value: viewing.endDate },
+            { label: "Status", value: viewing.status },
+          ]}
+        />
+      )}
     </section>
   );
 }

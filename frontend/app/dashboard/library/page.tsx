@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { Book, BookIssue, Page, Student } from "@/lib/types";
+import { DetailModal } from "@/components/DetailModal";
 
 export default function LibraryPage() {
   return (
@@ -20,6 +21,7 @@ function Books() {
   const [q, setQ] = useState("");
   const [form, setForm] = useState({ title: "", author: "", isbn: "", category: "", totalCopies: "1" });
   const [err, setErr] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<Book | null>(null);
   const list = useQuery({ queryKey: ["books", q], queryFn: () => api<Page<Book>>(`/library/books?size=50${q ? `&q=${encodeURIComponent(q)}` : ""}`) });
 
   const create = useMutation({
@@ -54,13 +56,33 @@ function Books() {
                 <td className="td">{b.author ?? "—"}</td>
                 <td className="td">{b.isbn ?? "—"}</td>
                 <td className="td">{b.availableCopies}/{b.totalCopies}</td>
-                <td className="td"><button className="text-xs text-red-600" onClick={() => { if (confirm("Delete book?")) del.mutate(b.id); }}>Delete</button></td>
+                <td className="td space-x-2 whitespace-nowrap">
+                  <button className="text-xs text-slate-600 hover:underline" onClick={() => setViewing(b)}>View</button>
+                  <button className="text-xs text-red-600" onClick={() => { if (confirm("Delete book?")) del.mutate(b.id); }}>Delete</button>
+                </td>
               </tr>
             ))}
             {list.data?.content.length === 0 && <tr><td className="td text-slate-400" colSpan={5}>No books.</td></tr>}
           </tbody>
         </table>
       </div>
+
+      {viewing && (
+        <DetailModal
+          title={viewing.title}
+          subtitle={`Book · ${viewing.availableCopies}/${viewing.totalCopies} available`}
+          onClose={() => setViewing(null)}
+          fields={[
+            { label: "Title", value: viewing.title },
+            { label: "Author", value: viewing.author },
+            { label: "ISBN", value: viewing.isbn },
+            { label: "Category", value: viewing.category },
+            { label: "Shelf", value: viewing.shelf },
+            { label: "Total copies", value: viewing.totalCopies },
+            { label: "Available", value: viewing.availableCopies },
+          ]}
+        />
+      )}
     </section>
   );
 }
@@ -72,6 +94,7 @@ function Issues() {
   const list = useQuery({ queryKey: ["issues"], queryFn: () => api<Page<BookIssue>>("/library/issues?size=50") });
   const [form, setForm] = useState({ bookId: "", studentId: "", dueDate: "" });
   const [err, setErr] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<BookIssue | null>(null);
 
   const issue = useMutation({
     mutationFn: () => api("/library/issues", { method: "POST", body: JSON.stringify({ ...form, dueDate: form.dueDate || null }) }),
@@ -113,13 +136,33 @@ function Issues() {
                 <td className="td">{i.issueDate}</td>
                 <td className="td">{i.dueDate ?? "—"}</td>
                 <td className={"td font-medium " + (i.status === "RETURNED" ? "text-emerald-600" : "text-amber-600")}>{i.status}{i.fine > 0 && ` · fine ${i.fine}`}</td>
-                <td className="td">{i.status === "ISSUED" && <button className="text-xs text-indigo-600" onClick={() => ret.mutate(i.id)}>Return</button>}</td>
+                <td className="td space-x-2 whitespace-nowrap">
+                  <button className="text-xs text-slate-600 hover:underline" onClick={() => setViewing(i)}>View</button>
+                  {i.status === "ISSUED" && <button className="text-xs text-indigo-600" onClick={() => ret.mutate(i.id)}>Return</button>}
+                </td>
               </tr>
             ))}
             {list.data?.content.length === 0 && <tr><td className="td text-slate-400" colSpan={6}>No issues.</td></tr>}
           </tbody>
         </table>
       </div>
+
+      {viewing && (
+        <DetailModal
+          title={bookTitle(viewing.bookId)}
+          subtitle={`Issue · ${viewing.status}`}
+          onClose={() => setViewing(null)}
+          fields={[
+            { label: "Book", value: bookTitle(viewing.bookId) },
+            { label: "Student", value: stuName(viewing.studentId) },
+            { label: "Issue date", value: viewing.issueDate },
+            { label: "Due date", value: viewing.dueDate },
+            { label: "Return date", value: viewing.returnDate },
+            { label: "Status", value: viewing.status },
+            { label: "Fine", value: viewing.fine },
+          ]}
+        />
+      )}
     </section>
   );
 }

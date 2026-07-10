@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { Hostel, HostelAllocation, Page, Room, Student } from "@/lib/types";
 import { HOSTEL_TYPES } from "@/lib/types";
+import { DetailModal } from "@/components/DetailModal";
 
 export default function HostelPage() {
   return (
@@ -21,6 +22,7 @@ function Hostels() {
   const list = useQuery({ queryKey: ["hostels"], queryFn: () => api<Hostel[]>("/hostel/hostels") });
   const [form, setForm] = useState({ name: "", type: "BOYS", address: "" });
   const [err, setErr] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<Hostel | null>(null);
   const create = useMutation({
     mutationFn: () => api("/hostel/hostels", { method: "POST", body: JSON.stringify(form) }),
     onSuccess: () => { setForm({ name: "", type: "BOYS", address: "" }); setErr(null); qc.invalidateQueries({ queryKey: ["hostels"] }); },
@@ -45,13 +47,30 @@ function Hostels() {
             {list.data?.map((h) => (
               <tr key={h.id}>
                 <td className="td font-medium">{h.name}</td><td className="td">{h.type}</td><td className="td">{h.address ?? "—"}</td>
-                <td className="td"><button className="text-xs text-red-600" onClick={() => { if (confirm("Delete hostel?")) del.mutate(h.id); }}>Delete</button></td>
+                <td className="td space-x-2 whitespace-nowrap">
+                  <button className="text-xs text-slate-600 hover:underline" onClick={() => setViewing(h)}>View</button>
+                  <button className="text-xs text-red-600" onClick={() => { if (confirm("Delete hostel?")) del.mutate(h.id); }}>Delete</button>
+                </td>
               </tr>
             ))}
             {list.data?.length === 0 && <tr><td className="td text-slate-400" colSpan={4}>None yet.</td></tr>}
           </tbody>
         </table>
       </div>
+
+      {viewing && (
+        <DetailModal
+          title={viewing.name}
+          subtitle={`Hostel · ${viewing.type}`}
+          onClose={() => setViewing(null)}
+          fields={[
+            { label: "Name", value: viewing.name },
+            { label: "Type", value: viewing.type },
+            { label: "Address", value: viewing.address },
+            { label: "Warden ID", value: viewing.wardenId },
+          ]}
+        />
+      )}
     </section>
   );
 }
@@ -67,6 +86,7 @@ function RoomsAndAllocations() {
   const [roomForm, setRoomForm] = useState({ roomNo: "", capacity: "2" });
   const [alloc, setAlloc] = useState({ studentId: "", roomId: "" });
   const [err, setErr] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<HostelAllocation | null>(null);
 
   const addRoom = useMutation({
     mutationFn: () => api("/hostel/rooms", { method: "POST", body: JSON.stringify({ hostelId, roomNo: roomForm.roomNo, capacity: Number(roomForm.capacity) }) }),
@@ -131,7 +151,10 @@ function RoomsAndAllocations() {
                   <tr key={a.id}>
                     <td className="td font-medium">{stuName(a.studentId)}</td><td className="td">{roomNo(a.roomId)}</td><td className="td">{a.allocatedDate}</td>
                     <td className={"td font-medium " + (a.status === "ALLOCATED" ? "text-emerald-600" : "text-slate-500")}>{a.status}</td>
-                    <td className="td">{a.status === "ALLOCATED" && <button className="text-xs text-indigo-600" onClick={() => vacate.mutate(a.id)}>Vacate</button>}</td>
+                    <td className="td space-x-2 whitespace-nowrap">
+                      <button className="text-xs text-slate-600 hover:underline" onClick={() => setViewing(a)}>View</button>
+                      {a.status === "ALLOCATED" && <button className="text-xs text-indigo-600" onClick={() => vacate.mutate(a.id)}>Vacate</button>}
+                    </td>
                   </tr>
                 ))}
                 {allocs.data?.content.length === 0 && <tr><td className="td text-slate-400" colSpan={5}>No allocations.</td></tr>}
@@ -139,6 +162,21 @@ function RoomsAndAllocations() {
             </table>
           </div>
         </>
+      )}
+
+      {viewing && (
+        <DetailModal
+          title={stuName(viewing.studentId)}
+          subtitle={`Allocation · ${viewing.status}`}
+          onClose={() => setViewing(null)}
+          fields={[
+            { label: "Student", value: stuName(viewing.studentId) },
+            { label: "Room", value: roomNo(viewing.roomId) },
+            { label: "Allocated date", value: viewing.allocatedDate },
+            { label: "Vacated date", value: viewing.vacatedDate },
+            { label: "Status", value: viewing.status },
+          ]}
+        />
       )}
     </section>
   );
