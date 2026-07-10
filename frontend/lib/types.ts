@@ -38,18 +38,25 @@ export interface Student {
   fullName: string;
   regNo?: string;
   rollNo?: string;
+  dob?: string;
   gender?: string;
+  photoUrl?: string;
   phone?: string;
   email?: string;
+  address?: string;
   status: string;
 }
 
 export interface Teacher {
   id: string;
   fullName: string;
+  dob?: string;
+  gender?: string;
   designation: string;
   phone?: string;
   email?: string;
+  address?: string;
+  joinDate?: string;
   status: string;
 }
 
@@ -59,6 +66,7 @@ export interface Guardian {
   phone?: string;
   email?: string;
   occupation?: string;
+  address?: string;
 }
 
 export interface AcademicYear {

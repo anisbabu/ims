@@ -4,11 +4,13 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { Guardian, Page } from "@/lib/types";
+import { DetailModal } from "@/components/DetailModal";
 
 export default function GuardiansPage() {
   const qc = useQueryClient();
   const [form, setForm] = useState({ fullName: "", phone: "", occupation: "" });
   const [err, setErr] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<Guardian | null>(null);
 
   const list = useQuery({
     queryKey: ["guardians"],
@@ -58,7 +60,7 @@ export default function GuardiansPage() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {list.data?.content.map((g) => (
-              <GuardianRow key={g.id} guardian={g} onChange={() => qc.invalidateQueries({ queryKey: ["guardians"] })} />
+              <GuardianRow key={g.id} guardian={g} onView={() => setViewing(g)} onChange={() => qc.invalidateQueries({ queryKey: ["guardians"] })} />
             ))}
             {list.data && list.data.content.length === 0 && (
               <tr><td className="td text-slate-400" colSpan={4}>No guardians yet.</td></tr>
@@ -66,11 +68,26 @@ export default function GuardiansPage() {
           </tbody>
         </table>
       </div>
+
+      {viewing && (
+        <DetailModal
+          title={viewing.fullName}
+          subtitle="Guardian"
+          onClose={() => setViewing(null)}
+          fields={[
+            { label: "Full name", value: viewing.fullName },
+            { label: "Phone", value: viewing.phone },
+            { label: "Email", value: viewing.email },
+            { label: "Occupation", value: viewing.occupation },
+            { label: "Address", value: viewing.address },
+          ]}
+        />
+      )}
     </div>
   );
 }
 
-function GuardianRow({ guardian, onChange }: { guardian: Guardian; onChange: () => void }) {
+function GuardianRow({ guardian, onView, onChange }: { guardian: Guardian; onView: () => void; onChange: () => void }) {
   const [edit, setEdit] = useState(false);
   const [f, setF] = useState({ fullName: guardian.fullName, phone: guardian.phone ?? "", occupation: guardian.occupation ?? "" });
   const [err, setErr] = useState<string | null>(null);
@@ -107,6 +124,7 @@ function GuardianRow({ guardian, onChange }: { guardian: Guardian; onChange: () 
       <td className="td">{guardian.phone ?? "—"}</td>
       <td className="td">{guardian.occupation ?? "—"}</td>
       <td className="td space-x-2 whitespace-nowrap">
+        <button className="text-xs text-slate-600 hover:underline" onClick={onView}>View</button>
         <button className="text-xs text-indigo-600" onClick={() => setEdit(true)}>Edit</button>
         <button className="text-xs text-red-600" onClick={() => { if (confirm(`Delete ${guardian.fullName}?`)) del.mutate(); }}>Delete</button>
         {err && <span className="text-xs text-red-600">{err}</span>}

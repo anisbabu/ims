@@ -5,11 +5,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { Page, Teacher } from "@/lib/types";
 import { DESIGNATIONS } from "@/lib/types";
+import { DetailModal } from "@/components/DetailModal";
 
 export default function TeachersPage() {
   const qc = useQueryClient();
   const [form, setForm] = useState({ fullName: "", designation: "SUBJECT", phone: "" });
   const [err, setErr] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<Teacher | null>(null);
 
   const list = useQuery({
     queryKey: ["teachers"],
@@ -61,7 +63,7 @@ export default function TeachersPage() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {list.data?.content.map((t) => (
-              <TeacherRow key={t.id} teacher={t} onChange={() => qc.invalidateQueries({ queryKey: ["teachers"] })} />
+              <TeacherRow key={t.id} teacher={t} onView={() => setViewing(t)} onChange={() => qc.invalidateQueries({ queryKey: ["teachers"] })} />
             ))}
             {list.data && list.data.content.length === 0 && (
               <tr><td className="td text-slate-400" colSpan={5}>No teachers yet.</td></tr>
@@ -69,11 +71,30 @@ export default function TeachersPage() {
           </tbody>
         </table>
       </div>
+
+      {viewing && (
+        <DetailModal
+          title={viewing.fullName}
+          subtitle={`Teacher · ${viewing.designation} · ${viewing.status}`}
+          onClose={() => setViewing(null)}
+          fields={[
+            { label: "Full name", value: viewing.fullName },
+            { label: "Designation", value: viewing.designation },
+            { label: "Gender", value: viewing.gender },
+            { label: "Date of birth", value: viewing.dob },
+            { label: "Join date", value: viewing.joinDate },
+            { label: "Phone", value: viewing.phone },
+            { label: "Email", value: viewing.email },
+            { label: "Address", value: viewing.address },
+            { label: "Status", value: viewing.status },
+          ]}
+        />
+      )}
     </div>
   );
 }
 
-function TeacherRow({ teacher, onChange }: { teacher: Teacher; onChange: () => void }) {
+function TeacherRow({ teacher, onView, onChange }: { teacher: Teacher; onView: () => void; onChange: () => void }) {
   const [edit, setEdit] = useState(false);
   const [f, setF] = useState({ fullName: teacher.fullName, designation: teacher.designation, phone: teacher.phone ?? "", status: teacher.status });
   const [err, setErr] = useState<string | null>(null);
@@ -112,6 +133,7 @@ function TeacherRow({ teacher, onChange }: { teacher: Teacher; onChange: () => v
       <td className="td">{teacher.phone ?? "—"}</td>
       <td className="td">{teacher.status}</td>
       <td className="td space-x-2 whitespace-nowrap">
+        <button className="text-xs text-slate-600 hover:underline" onClick={onView}>View</button>
         <button className="text-xs text-indigo-600" onClick={() => setEdit(true)}>Edit</button>
         <button className="text-xs text-red-600" onClick={() => { if (confirm(`Delete ${teacher.fullName}?`)) del.mutate(); }}>Delete</button>
         {err && <span className="text-xs text-red-600">{err}</span>}

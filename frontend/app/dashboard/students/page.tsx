@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { Guardian, Page, Student } from "@/lib/types";
 import { RELATIONS } from "@/lib/types";
+import { DetailModal } from "@/components/DetailModal";
 
 export default function StudentsPage() {
   const qc = useQueryClient();
@@ -12,6 +13,7 @@ export default function StudentsPage() {
   const [form, setForm] = useState({ fullName: "", regNo: "", gender: "MALE" });
   const [err, setErr] = useState<string | null>(null);
   const [selected, setSelected] = useState<Student | null>(null);
+  const [viewing, setViewing] = useState<Student | null>(null);
 
   const list = useQuery({
     queryKey: ["students", q],
@@ -76,6 +78,7 @@ export default function StudentsPage() {
           <tbody className="divide-y divide-slate-100">
             {list.data?.content.map((s) => (
               <StudentRow key={s.id} student={s}
+                onView={() => setViewing(s)}
                 onGuardians={() => setSelected(s)}
                 onChange={() => qc.invalidateQueries({ queryKey: ["students"] })} />
             ))}
@@ -87,11 +90,58 @@ export default function StudentsPage() {
       </div>
 
       {selected && <GuardianLinker student={selected} onClose={() => setSelected(null)} />}
+      {viewing && <StudentDetail student={viewing} onClose={() => setViewing(null)} />}
     </div>
   );
 }
 
-function StudentRow({ student, onGuardians, onChange }: { student: Student; onGuardians: () => void; onChange: () => void }) {
+function StudentDetail({ student, onClose }: { student: Student; onClose: () => void }) {
+  const guardians = useQuery({
+    queryKey: ["guardians-all"],
+    queryFn: () => api<Page<Guardian>>("/guardians?size=100"),
+  });
+  const links = useQuery({
+    queryKey: ["student-guardians", student.id],
+    queryFn: () => api<{ id: string; guardianId: string; relation: string; primary: boolean }[]>(
+      `/students/${student.id}/guardians`
+    ),
+  });
+  const gName = (id: string) => guardians.data?.content.find((x) => x.id === id)?.fullName ?? id;
+
+  return (
+    <DetailModal
+      title={student.fullName}
+      subtitle={`Student · ${student.status}`}
+      onClose={onClose}
+      fields={[
+        { label: "Full name", value: student.fullName },
+        { label: "Registration no", value: student.regNo },
+        { label: "Roll no", value: student.rollNo },
+        { label: "Gender", value: student.gender },
+        { label: "Date of birth", value: student.dob },
+        { label: "Phone", value: student.phone },
+        { label: "Email", value: student.email },
+        { label: "Address", value: student.address },
+        { label: "Status", value: student.status },
+      ]}
+    >
+      <div>
+        <h3 className="mb-2 text-sm font-semibold text-slate-700">Guardians</h3>
+        <ul className="space-y-1 text-sm">
+          {links.data?.map((l) => (
+            <li key={l.id} className="flex justify-between rounded border border-slate-200 px-3 py-1.5">
+              <span>{gName(l.guardianId)}{l.primary && <span className="ml-2 text-xs text-indigo-600">primary</span>}</span>
+              <span className="text-slate-500">{l.relation}</span>
+            </li>
+          ))}
+          {links.data?.length === 0 && <li className="text-slate-400">No guardians linked.</li>}
+        </ul>
+      </div>
+    </DetailModal>
+  );
+}
+
+function StudentRow({ student, onView, onGuardians, onChange }: { student: Student; onView: () => void; onGuardians: () => void; onChange: () => void }) {
   const [edit, setEdit] = useState(false);
   const [f, setF] = useState({ fullName: student.fullName, rollNo: student.rollNo ?? "", gender: student.gender ?? "MALE", status: student.status });
   const [err, setErr] = useState<string | null>(null);
@@ -132,9 +182,10 @@ function StudentRow({ student, onGuardians, onChange }: { student: Student; onGu
       <td className="td">{student.gender ?? "—"}</td>
       <td className="td">{student.status}</td>
       <td className="td space-x-2 whitespace-nowrap">
-        <button className="btn-ghost" onClick={onGuardians}>Guardians</button>
+        <button className="text-xs text-slate-600 hover:underline" onClick={onView}>View</button>
         <button className="text-xs text-indigo-600" onClick={() => setEdit(true)}>Edit</button>
         <button className="text-xs text-red-600" onClick={() => { if (confirm(`Delete ${student.fullName}?`)) del.mutate(); }}>Delete</button>
+        <button className="text-xs text-slate-500 hover:underline" onClick={onGuardians}>Guardians</button>
         {err && <span className="text-xs text-red-600">{err}</span>}
       </td>
     </tr>
