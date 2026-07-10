@@ -70,7 +70,7 @@ Multi-tenant SaaS. **Shared DB, shared schema, `institute_id` on every tenant-ow
 - `attendance/` — daily per-student marking (bulk upsert), list, summary %
 - `exam/` — subjects, exam types, exams, marks (per subject upsert), computed marksheet/result (grade/GPA/pass-fail/class rank)
 - `certificate/` — issue/list documents, PDF export via OpenPDF
-- `fee/` — charges + payment ledger, `PENDING→PARTIAL→PAID`, waive, per-student summary; auto-journals to accounting on payment
+- `fee/` — charges + payment ledger, `PENDING→PARTIAL→PAID`, waive, per-student summary; auto-journals to accounting on payment. Also fee structures (per year+grade heads, idempotent bulk `POST /api/fee-structures/generate` for ENROLLED students) and online payments (`/api/payments/checkout|{id}/confirm|cancel`, self-scoped to the paying student/guardian; `PaymentGatewayProvider` interface with mock provider — real gateways plug in there and complete via webhook instead of the confirm endpoint; frontend hosted-checkout page at `app/pay/[id]`)
 - `routine/` — timetable slots: `CLASS` (weekly, section/day/time) and `EXAM` (dated, exam/date/time), per-kind validation
 - `accounting/` — double-entry: financial years, chart of accounts (seeded per institute), manual + auto journal entries, ledger / trial balance / P&L / balance sheet
 - `library/` `hostel/` `transport/` — facility modules (books/issues, rooms/allocations, vehicles/routes/assignments)

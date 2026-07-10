@@ -1,8 +1,9 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import type { StudentPortalData, Subject } from "@/lib/types";
+import type { OnlinePayment, StudentPortalData, Subject } from "@/lib/types";
 
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
@@ -14,6 +15,14 @@ function Stat({ label, value }: { label: string; value: number | string }) {
 }
 
 export function StudentPortal() {
+  const router = useRouter();
+  const checkout = useMutation({
+    mutationFn: (feeId: string) =>
+      api<OnlinePayment>("/payments/checkout", { method: "POST", body: JSON.stringify({ feeId }) }),
+    onSuccess: (p) => {
+      if (p.checkoutUrl) router.push(p.checkoutUrl);
+    },
+  });
   const portal = useQuery({
     queryKey: ["portal-student"],
     queryFn: () => api<StudentPortalData>("/portal/student"),
@@ -85,7 +94,7 @@ export function StudentPortal() {
           <h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold">My fees</h2>
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
-              <tr><th className="th">Fee</th><th className="th">Amount</th><th className="th">Due</th><th className="th">Status</th></tr>
+              <tr><th className="th">Fee</th><th className="th">Amount</th><th className="th">Due</th><th className="th">Status</th><th className="th"></th></tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {d.fees.fees.map((f) => (
@@ -94,10 +103,21 @@ export function StudentPortal() {
                   <td className="td">{f.amount}</td>
                   <td className="td">{f.dueAmount}</td>
                   <td className="td">{f.status}</td>
+                  <td className="td">
+                    {Number(f.dueAmount) > 0 && f.status !== "WAIVED" && (
+                      <button
+                        className="text-xs font-medium text-indigo-600 hover:underline"
+                        disabled={checkout.isPending}
+                        onClick={() => checkout.mutate(f.id)}
+                      >
+                        Pay now
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
               {d.fees.fees.length === 0 && (
-                <tr><td className="td text-slate-400" colSpan={4}>No fees billed.</td></tr>
+                <tr><td className="td text-slate-400" colSpan={5}>No fees billed.</td></tr>
               )}
             </tbody>
           </table>

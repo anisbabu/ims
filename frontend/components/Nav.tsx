@@ -39,6 +39,7 @@ const GROUPS: Group[] = [
     roles: ADMINS,
     items: [
       { href: "/dashboard/fees", label: "Fees" },
+      { href: "/dashboard/fee-structures", label: "Fee structures" },
       { href: "/dashboard/accounting/accounts", label: "Chart of accounts" },
       { href: "/dashboard/accounting/journals", label: "Journals" },
       { href: "/dashboard/accounting/reports", label: "Reports" },

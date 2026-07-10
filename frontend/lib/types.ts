@@ -212,6 +212,28 @@ export interface FeeSummary {
   fees: Fee[];
 }
 
+export interface FeeStructure {
+  id: string;
+  academicYearId: string;
+  gradeId: string;
+  title: string;
+  amount: number;
+  dueDate?: string;
+}
+
+export interface OnlinePayment {
+  id: string;
+  feeId: string;
+  feeTitle: string;
+  studentId: string;
+  amount: number;
+  provider: string;
+  status: "PENDING" | "SUCCESS" | "CANCELLED" | "FAILED";
+  reference?: string;
+  paidAt?: string;
+  checkoutUrl?: string;
+}
+
 export interface AttendanceRecord {
   id: string;
   studentId: string;

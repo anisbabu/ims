@@ -11,4 +11,5 @@ public interface FeeRepository extends JpaRepository<Fee, UUID> {
     Page<Fee> findByStudentId(UUID studentId, Pageable pageable);
     Page<Fee> findByStatus(FeeStatus status, Pageable pageable);
     List<Fee> findAllByStudentId(UUID studentId);
+    boolean existsByStudentIdAndAcademicYearIdAndTitle(UUID studentId, UUID academicYearId, String title);
 }

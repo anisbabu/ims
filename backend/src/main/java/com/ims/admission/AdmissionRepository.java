@@ -10,4 +10,5 @@ import java.util.UUID;
 public interface AdmissionRepository extends JpaRepository<Admission, UUID> {
     Page<Admission> findByStatus(AdmissionStatus status, Pageable pageable);
     List<Admission> findByStudentId(UUID studentId);
+    List<Admission> findByAcademicYearIdAndGradeIdAndStatus(UUID academicYearId, UUID gradeId, AdmissionStatus status);
 }

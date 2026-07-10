@@ -1,10 +1,19 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import type { GuardianPortalData } from "@/lib/types";
+import type { GuardianPortalData, OnlinePayment } from "@/lib/types";
 
 export function GuardianPortal() {
+  const router = useRouter();
+  const checkout = useMutation({
+    mutationFn: (feeId: string) =>
+      api<OnlinePayment>("/payments/checkout", { method: "POST", body: JSON.stringify({ feeId }) }),
+    onSuccess: (p) => {
+      if (p.checkoutUrl) router.push(p.checkoutUrl);
+    },
+  });
   const portal = useQuery({
     queryKey: ["portal-guardian"],
     queryFn: () => api<GuardianPortalData>("/portal/guardian"),
@@ -58,7 +67,7 @@ export function GuardianPortal() {
           {c.fees.fees.length > 0 && (
             <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-slate-50">
-                <tr><th className="th">Fee</th><th className="th">Amount</th><th className="th">Due</th><th className="th">Due date</th><th className="th">Status</th></tr>
+                <tr><th className="th">Fee</th><th className="th">Amount</th><th className="th">Due</th><th className="th">Due date</th><th className="th">Status</th><th className="th"></th></tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {c.fees.fees.map((f) => (
@@ -68,6 +77,17 @@ export function GuardianPortal() {
                     <td className="td">{f.dueAmount}</td>
                     <td className="td">{f.dueDate ?? "—"}</td>
                     <td className="td">{f.status}</td>
+                    <td className="td">
+                      {Number(f.dueAmount) > 0 && f.status !== "WAIVED" && (
+                        <button
+                          className="text-xs font-medium text-indigo-600 hover:underline"
+                          disabled={checkout.isPending}
+                          onClick={() => checkout.mutate(f.id)}
+                        >
+                          Pay now
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
