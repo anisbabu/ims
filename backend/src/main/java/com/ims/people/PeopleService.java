@@ -115,6 +115,7 @@ public class PeopleService {
         t.setEmail(req.email());
         t.setAddress(req.address());
         t.setJoinDate(req.joinDate());
+        t.setPhotoUrl(req.photoUrl());
         return TeacherResponse.from(teacherRepository.save(t));
     }
 
@@ -143,6 +144,7 @@ public class PeopleService {
         if (req.address() != null) t.setAddress(req.address());
         if (req.joinDate() != null) t.setJoinDate(req.joinDate());
         if (req.status() != null) t.setStatus(req.status());
+        if (req.photoUrl() != null) t.setPhotoUrl(req.photoUrl());
         return TeacherResponse.from(t);
     }
 
@@ -167,6 +169,7 @@ public class PeopleService {
         g.setEmail(req.email());
         g.setOccupation(req.occupation());
         g.setAddress(req.address());
+        g.setPhotoUrl(req.photoUrl());
         return GuardianResponse.from(guardianRepository.save(g));
     }
 
@@ -191,6 +194,7 @@ public class PeopleService {
         if (req.email() != null) g.setEmail(req.email());
         if (req.occupation() != null) g.setOccupation(req.occupation());
         if (req.address() != null) g.setAddress(req.address());
+        if (req.photoUrl() != null) g.setPhotoUrl(req.photoUrl());
         return GuardianResponse.from(g);
     }
 

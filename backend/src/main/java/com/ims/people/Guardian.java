@@ -22,4 +22,7 @@ public class Guardian extends TenantAwareEntity {
     private String email;
     private String occupation;
     private String address;
+
+    @Column(name = "photo_url")
+    private String photoUrl;
 }

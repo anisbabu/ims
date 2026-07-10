@@ -64,7 +64,8 @@ public final class PeopleDtos {
             String phone,
             String email,
             String address,
-            LocalDate joinDate) {
+            LocalDate joinDate,
+            String photoUrl) {
     }
 
     public record UpdateTeacher(
@@ -76,16 +77,18 @@ public final class PeopleDtos {
             String email,
             String address,
             LocalDate joinDate,
-            PersonStatus status) {
+            PersonStatus status,
+            String photoUrl) {
     }
 
     public record TeacherResponse(
             UUID id, String fullName, LocalDate dob, Gender gender, Designation designation,
-            String phone, String email, String address, LocalDate joinDate, PersonStatus status) {
+            String phone, String email, String address, LocalDate joinDate, PersonStatus status,
+            String photoUrl) {
         public static TeacherResponse from(Teacher t) {
             return new TeacherResponse(t.getId(), t.getFullName(), t.getDob(), t.getGender(),
                     t.getDesignation(), t.getPhone(), t.getEmail(), t.getAddress(),
-                    t.getJoinDate(), t.getStatus());
+                    t.getJoinDate(), t.getStatus(), t.getPhotoUrl());
         }
     }
 
@@ -95,7 +98,8 @@ public final class PeopleDtos {
             String phone,
             String email,
             String occupation,
-            String address) {
+            String address,
+            String photoUrl) {
     }
 
     public record UpdateGuardian(
@@ -103,14 +107,16 @@ public final class PeopleDtos {
             String phone,
             String email,
             String occupation,
-            String address) {
+            String address,
+            String photoUrl) {
     }
 
     public record GuardianResponse(
-            UUID id, String fullName, String phone, String email, String occupation, String address) {
+            UUID id, String fullName, String phone, String email, String occupation, String address,
+            String photoUrl) {
         public static GuardianResponse from(Guardian g) {
             return new GuardianResponse(g.getId(), g.getFullName(), g.getPhone(), g.getEmail(),
-                    g.getOccupation(), g.getAddress());
+                    g.getOccupation(), g.getAddress(), g.getPhotoUrl());
         }
     }
 
