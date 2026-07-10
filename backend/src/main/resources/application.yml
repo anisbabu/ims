@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: ims
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/ims}
+    username: ${DB_USER:ims}
+    password: ${DB_PASSWORD:ims}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+server:
+  port: ${SERVER_PORT:8080}
+
+ims:
+  jwt:
+    secret: ${JWT_SECRET:change-me-in-prod-please-use-a-long-random-256-bit-secret-value}
+    access-ttl-seconds: ${JWT_ACCESS_TTL:900}
+    refresh-ttl-seconds: ${JWT_REFRESH_TTL:1209600}
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:3001}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
+
+logging:
+  level:
+    org.hibernate.SQL: info
