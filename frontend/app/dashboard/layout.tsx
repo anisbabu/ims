@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { clearTokens, getAccess } from "@/lib/api";
 import { useMe } from "@/lib/hooks";
 import { Nav } from "@/components/Nav";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export default function DashboardLayout({
   children,
@@ -34,7 +35,10 @@ export default function DashboardLayout({
     <div className="mx-auto flex min-h-screen max-w-7xl gap-6 p-4">
       <aside className="w-56 shrink-0 space-y-4">
         <div className="px-3">
-          <div className="text-lg font-bold text-indigo-700">IMS</div>
+          <div className="flex items-center justify-between">
+            <div className="text-lg font-bold text-indigo-700">IMS</div>
+            <NotificationBell />
+          </div>
           <div className="text-xs text-slate-500">
             {me ? `${me.fullName} · ${me.role}` : "…"}
           </div>

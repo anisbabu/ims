@@ -58,6 +58,7 @@ export interface Teacher {
   address?: string;
   joinDate?: string;
   status: string;
+  photoUrl?: string;
 }
 
 export interface Guardian {
@@ -67,6 +68,21 @@ export interface Guardian {
   email?: string;
   occupation?: string;
   address?: string;
+  photoUrl?: string;
+}
+
+export interface Employee {
+  id: string;
+  fullName: string;
+  designation?: string;
+  dob?: string;
+  gender?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  joinDate?: string;
+  status: string;
+  photoUrl?: string;
 }
 
 export interface AcademicYear {
@@ -468,6 +484,89 @@ export interface TransportAssignment {
   endDate?: string;
   status: "ACTIVE" | "ENDED";
 }
+
+// ---- Portals ----
+export interface PortalAdmission {
+  admissionId: string;
+  academicYearId?: string;
+  academicYear?: string;
+  gradeId?: string;
+  grade?: string;
+  sectionId?: string;
+  section?: string;
+  status: string;
+}
+
+export interface AttendanceSummaryData {
+  studentId: string;
+  from: string;
+  to: string;
+  totalDays: number;
+  counts: Record<string, number>;
+  presentPercent: number;
+}
+
+export interface StudentPortalData {
+  student: Student;
+  admission?: PortalAdmission | null;
+  attendance: AttendanceSummaryData;
+  fees: FeeSummary;
+  marks: StudentMarksReport;
+  routine: RoutineSlot[];
+}
+
+export interface ChildSummary {
+  studentId: string;
+  fullName: string;
+  admission?: PortalAdmission | null;
+  attendance: AttendanceSummaryData;
+  fees: FeeSummary;
+}
+
+export interface GuardianPortalData {
+  guardian: Guardian;
+  children: ChildSummary[];
+}
+
+export interface PortalSectionInfo {
+  id: string;
+  name: string;
+  grade?: string;
+}
+
+export interface TeacherPortalData {
+  teacher: Teacher;
+  classTeacherOf: PortalSectionInfo[];
+  routine: RoutineSlot[];
+}
+
+// ---- Notices & notifications ----
+export type NoticeAudience = "ALL" | "STUDENTS" | "GUARDIANS" | "TEACHERS" | "STAFF";
+
+export interface Notice {
+  id: string;
+  title: string;
+  body?: string;
+  audience: NoticeAudience;
+  gradeId?: string;
+  sectionId?: string;
+  publishDate: string;
+  expiresOn?: string;
+  pinned: boolean;
+  createdAt?: string;
+}
+
+export interface AppNotification {
+  id: string;
+  type: "NOTICE" | "FEE" | "ATTENDANCE" | "EXAM" | "GENERAL";
+  title: string;
+  body?: string;
+  link?: string;
+  readAt?: string;
+  createdAt?: string;
+}
+
+export const NOTICE_AUDIENCES = ["ALL", "STUDENTS", "GUARDIANS", "TEACHERS", "STAFF"];
 
 export const EXAM_STATUSES = ["SCHEDULED", "ONGOING", "COMPLETED", "PUBLISHED"];
 export const CERTIFICATE_TYPES = [
