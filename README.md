@@ -32,6 +32,8 @@ filter (queries) plus a `TenantGuard` on primary-key loads.
 - Library: books (CRUD, copy tracking) + issue/return with fines.
 - Hostel: hostels, rooms (occupancy), student allocation/vacate.
 - Transport: vehicles, routes (fare/stops), student route assignments.
+- Academic reports: attendance report (date range, optional section, present %), exam result sheet
+  (whole-class ranked with grade/GPA/pass-fail), and per-student marks history across exams.
 - Frontend: login + admin dashboard with CRUD for all of the above, marks entry + marksheet view,
   weekly class grid + exam schedule.
 

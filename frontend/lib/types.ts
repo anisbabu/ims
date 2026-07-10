@@ -345,6 +345,56 @@ export interface AccountLedger {
 
 export const ACCOUNT_TYPES = ["ASSET", "LIABILITY", "EQUITY", "INCOME", "EXPENSE"];
 
+// ---- Academic reports ----
+export interface AttendanceReportRow {
+  studentId: string;
+  studentName: string;
+  present: number;
+  absent: number;
+  late: number;
+  excused: number;
+  holiday: number;
+  totalDays: number;
+  presentPercent: number;
+}
+export interface AttendanceReport {
+  from: string;
+  to: string;
+  sectionId?: string;
+  rows: AttendanceReportRow[];
+}
+export interface ExamResultRow {
+  studentId: string;
+  studentName: string;
+  subjects: number;
+  totalMax: number;
+  totalObtained: number;
+  percent: number;
+  gpa: number;
+  letter: string;
+  pass: boolean;
+  position: number;
+}
+export interface ExamResultSheet {
+  examId: string;
+  examName: string;
+  rows: ExamResultRow[];
+}
+export interface StudentMarkRow {
+  examId: string;
+  examName: string;
+  totalMax: number;
+  totalObtained: number;
+  percent: number;
+  letter: string;
+  pass: boolean;
+}
+export interface StudentMarksReport {
+  studentId: string;
+  studentName: string;
+  rows: StudentMarkRow[];
+}
+
 // ---- Library ----
 export interface Book {
   id: string;
