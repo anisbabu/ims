@@ -14,6 +14,17 @@ export interface Me {
   profileId: string | null;
 }
 
+export interface AppUser {
+  id: string;
+  email: string;
+  fullName: string;
+  role: Role;
+  status: "ACTIVE" | "DISABLED";
+  instituteId: string | null;
+  profileId: string | null;
+  createdAt: string;
+}
+
 export interface Page<T> {
   content: T[];
   page: number;

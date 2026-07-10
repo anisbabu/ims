@@ -71,3 +71,33 @@ export async function api<T = unknown>(
 }
 
 export const API_BASE_URL = API_BASE;
+
+/** Fetches a binary (e.g. PDF) with auth + one refresh retry, and triggers a browser download. */
+export async function downloadFile(path: string, fallbackName: string): Promise<void> {
+  const doFetch = async () => {
+    const headers = new Headers();
+    const token = getAccess();
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    return fetch(`${API_BASE}${path}`, { headers });
+  };
+
+  let res = await doFetch();
+  if (res.status === 401 && (await tryRefresh())) {
+    res = await doFetch();
+  }
+  if (!res.ok) throw new ApiError(res.status, `Download failed (${res.status})`);
+
+  const disposition = res.headers.get("Content-Disposition") ?? "";
+  const match = /filename="?([^"]+)"?/.exec(disposition);
+  const name = match ? match[1] : fallbackName;
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}

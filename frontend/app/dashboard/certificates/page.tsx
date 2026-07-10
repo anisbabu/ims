@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, downloadFile } from "@/lib/api";
 import type { Certificate, Page, Student } from "@/lib/types";
 import { CERTIFICATE_TYPES } from "@/lib/types";
 
@@ -64,7 +64,7 @@ export default function CertificatesPage() {
       <div className="card overflow-x-auto p-0">
         <table className="min-w-full divide-y divide-slate-200">
           <thead className="bg-slate-50">
-            <tr><th className="th">Serial</th><th className="th">Student</th><th className="th">Type</th><th className="th">Title</th><th className="th">Issued</th></tr>
+            <tr><th className="th">Serial</th><th className="th">Student</th><th className="th">Type</th><th className="th">Title</th><th className="th">Issued</th><th className="th"></th></tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {list.data?.content.map((c) => (
@@ -74,10 +74,18 @@ export default function CertificatesPage() {
                 <td className="td">{c.type}</td>
                 <td className="td">{c.title}</td>
                 <td className="td">{c.issueDate ?? "—"}</td>
+                <td className="td">
+                  <button
+                    className="text-xs font-medium text-indigo-600 hover:underline"
+                    onClick={() => downloadFile(`/certificates/${c.id}/pdf`, `certificate-${c.serialNo ?? c.id}.pdf`)}
+                  >
+                    PDF ↓
+                  </button>
+                </td>
               </tr>
             ))}
             {list.data && list.data.content.length === 0 && (
-              <tr><td className="td text-slate-400" colSpan={5}>No certificates yet.</td></tr>
+              <tr><td className="td text-slate-400" colSpan={6}>No certificates yet.</td></tr>
             )}
           </tbody>
         </table>

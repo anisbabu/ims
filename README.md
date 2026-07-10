@@ -6,6 +6,10 @@ filter (queries) plus a `TenantGuard` on primary-key loads.
 
 ## MVP scope built
 - Auth: JWT (access+refresh), roles `SUPER_ADMIN / INSTITUTE_ADMIN / TEACHER / STUDENT / GUARDIAN`.
+- User administration: full CRUD on users (create/list/read/update/delete), role assignment,
+  enable/disable, admin password reset, self change-password — tenant-scoped and role-enforced
+  (institute admins manage only their own tenant, cannot grant SUPER_ADMIN).
+- Certificates export to **PDF** (`GET /api/certificates/{id}/pdf`).
 - Institute (tenant root), created by super-admin together with its first admin.
 - Academic year, grade/class, section (with class-teacher assignment).
 - People: student, teacher (designation: headmaster … PT), guardian, student↔guardian links (relation type).

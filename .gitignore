@@ -19,3 +19,6 @@ node_modules/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# demo artifacts
+sample-certificate.pdf
