@@ -40,6 +40,14 @@ const GROUPS: Group[] = [
     ],
   },
   {
+    title: "Facilities",
+    items: [
+      { href: "/dashboard/library", label: "Library" },
+      { href: "/dashboard/hostel", label: "Hostel" },
+      { href: "/dashboard/transport", label: "Transport" },
+    ],
+  },
+  {
     title: "Administration",
     items: [
       { href: "/dashboard/users", label: "Users & roles" },

@@ -29,6 +29,9 @@ filter (queries) plus a `TenantGuard` on primary-key loads.
 - Accounting (double-entry): financial years, chart of accounts (seeded per institute), balanced
   journal entries (manual + draft/post), **auto-journals** from fee payments (Dr Cash/Bank, Cr Fee
   Income, cash-basis), and reports — **ledger, trial balance, profit & loss, balance sheet**.
+- Library: books (CRUD, copy tracking) + issue/return with fines.
+- Hostel: hostels, rooms (occupancy), student allocation/vacate.
+- Transport: vehicles, routes (fare/stops), student route assignments.
 - Frontend: login + admin dashboard with CRUD for all of the above, marks entry + marksheet view,
   weekly class grid + exam schedule.
 

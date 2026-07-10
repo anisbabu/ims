@@ -345,6 +345,80 @@ export interface AccountLedger {
 
 export const ACCOUNT_TYPES = ["ASSET", "LIABILITY", "EQUITY", "INCOME", "EXPENSE"];
 
+// ---- Library ----
+export interface Book {
+  id: string;
+  title: string;
+  author?: string;
+  isbn?: string;
+  category?: string;
+  shelf?: string;
+  totalCopies: number;
+  availableCopies: number;
+}
+export interface BookIssue {
+  id: string;
+  bookId: string;
+  studentId: string;
+  issueDate: string;
+  dueDate?: string;
+  returnDate?: string;
+  status: "ISSUED" | "RETURNED";
+  fine: number;
+}
+
+// ---- Hostel ----
+export interface Hostel {
+  id: string;
+  name: string;
+  type: "BOYS" | "GIRLS" | "MIXED";
+  address?: string;
+  wardenId?: string;
+}
+export interface Room {
+  id: string;
+  hostelId: string;
+  roomNo: string;
+  capacity: number;
+  occupied: number;
+}
+export interface HostelAllocation {
+  id: string;
+  studentId: string;
+  hostelId: string;
+  roomId: string;
+  allocatedDate: string;
+  vacatedDate?: string;
+  status: "ALLOCATED" | "VACATED";
+}
+export const HOSTEL_TYPES = ["BOYS", "GIRLS", "MIXED"];
+
+// ---- Transport ----
+export interface Vehicle {
+  id: string;
+  regNo: string;
+  model?: string;
+  capacity: number;
+  driverName?: string;
+  driverPhone?: string;
+}
+export interface TransportRoute {
+  id: string;
+  name: string;
+  stops?: string;
+  fare?: number;
+  vehicleId?: string;
+}
+export interface TransportAssignment {
+  id: string;
+  studentId: string;
+  routeId: string;
+  stopName?: string;
+  assignedDate: string;
+  endDate?: string;
+  status: "ACTIVE" | "ENDED";
+}
+
 export const EXAM_STATUSES = ["SCHEDULED", "ONGOING", "COMPLETED", "PUBLISHED"];
 export const CERTIFICATE_TYPES = [
   "MARKSHEET",
