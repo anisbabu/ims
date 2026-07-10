@@ -9,4 +9,5 @@ public interface RoutineSlotRepository extends JpaRepository<RoutineSlot, UUID> 
     List<RoutineSlot> findByKindAndSectionId(RoutineKind kind, UUID sectionId);
     List<RoutineSlot> findByKindAndExamId(RoutineKind kind, UUID examId);
     List<RoutineSlot> findByKind(RoutineKind kind);
+    List<RoutineSlot> findByTeacherId(UUID teacherId);
 }

@@ -7,4 +7,5 @@ import java.util.UUID;
 
 public interface SectionRepository extends JpaRepository<Section, UUID> {
     List<Section> findByGradeId(UUID gradeId);
+    List<Section> findByClassTeacherId(UUID classTeacherId);
 }
