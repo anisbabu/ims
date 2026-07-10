@@ -34,10 +34,7 @@ export default function StudentsPage() {
 
       <form
         className="card grid grid-cols-1 gap-3 md:grid-cols-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          create.mutate();
-        }}
+        onSubmit={(e) => { e.preventDefault(); create.mutate(); }}
       >
         <div>
           <label className="label">Full name</label>
@@ -53,9 +50,7 @@ export default function StudentsPage() {
           <label className="label">Gender</label>
           <select className="input" value={form.gender}
             onChange={(e) => setForm({ ...form, gender: e.target.value })}>
-            <option>MALE</option>
-            <option>FEMALE</option>
-            <option>OTHER</option>
+            <option>MALE</option><option>FEMALE</option><option>OTHER</option>
           </select>
         </div>
         <div className="flex items-end">
@@ -74,27 +69,18 @@ export default function StudentsPage() {
         <table className="min-w-full divide-y divide-slate-200">
           <thead className="bg-slate-50">
             <tr>
-              <th className="th">Name</th>
-              <th className="th">Reg</th>
-              <th className="th">Gender</th>
-              <th className="th">Status</th>
-              <th className="th"></th>
+              <th className="th">Name</th><th className="th">Reg</th><th className="th">Roll</th>
+              <th className="th">Gender</th><th className="th">Status</th><th className="th">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {list.data?.content.map((s) => (
-              <tr key={s.id}>
-                <td className="td font-medium">{s.fullName}</td>
-                <td className="td">{s.regNo ?? "—"}</td>
-                <td className="td">{s.gender ?? "—"}</td>
-                <td className="td">{s.status}</td>
-                <td className="td">
-                  <button className="btn-ghost" onClick={() => setSelected(s)}>Guardians</button>
-                </td>
-              </tr>
+              <StudentRow key={s.id} student={s}
+                onGuardians={() => setSelected(s)}
+                onChange={() => qc.invalidateQueries({ queryKey: ["students"] })} />
             ))}
             {list.data && list.data.content.length === 0 && (
-              <tr><td className="td text-slate-400" colSpan={5}>No students yet.</td></tr>
+              <tr><td className="td text-slate-400" colSpan={6}>No students yet.</td></tr>
             )}
           </tbody>
         </table>
@@ -102,6 +88,56 @@ export default function StudentsPage() {
 
       {selected && <GuardianLinker student={selected} onClose={() => setSelected(null)} />}
     </div>
+  );
+}
+
+function StudentRow({ student, onGuardians, onChange }: { student: Student; onGuardians: () => void; onChange: () => void }) {
+  const [edit, setEdit] = useState(false);
+  const [f, setF] = useState({ fullName: student.fullName, rollNo: student.rollNo ?? "", gender: student.gender ?? "MALE", status: student.status });
+  const [err, setErr] = useState<string | null>(null);
+
+  const save = useMutation({
+    mutationFn: () => api(`/students/${student.id}`, { method: "PUT", body: JSON.stringify(f) }),
+    onSuccess: () => { setEdit(false); setErr(null); onChange(); },
+    onError: (e) => setErr(e instanceof Error ? e.message : "Failed"),
+  });
+  const del = useMutation({
+    mutationFn: () => api(`/students/${student.id}`, { method: "DELETE" }),
+    onSuccess: onChange,
+    onError: (e) => setErr(e instanceof Error ? e.message : "Failed"),
+  });
+
+  if (edit) {
+    return (
+      <tr>
+        <td className="td"><input className="input" value={f.fullName} onChange={(e) => setF({ ...f, fullName: e.target.value })} /></td>
+        <td className="td">{student.regNo ?? "—"}</td>
+        <td className="td"><input className="input max-w-[5rem]" value={f.rollNo} onChange={(e) => setF({ ...f, rollNo: e.target.value })} /></td>
+        <td className="td"><select className="input" value={f.gender} onChange={(e) => setF({ ...f, gender: e.target.value })}><option>MALE</option><option>FEMALE</option><option>OTHER</option></select></td>
+        <td className="td"><select className="input" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}><option>ACTIVE</option><option>INACTIVE</option></select></td>
+        <td className="td space-x-2 whitespace-nowrap">
+          <button className="text-xs text-indigo-600" onClick={() => save.mutate()}>Save</button>
+          <button className="text-xs text-slate-500" onClick={() => setEdit(false)}>Cancel</button>
+          {err && <span className="text-xs text-red-600">{err}</span>}
+        </td>
+      </tr>
+    );
+  }
+
+  return (
+    <tr>
+      <td className="td font-medium">{student.fullName}</td>
+      <td className="td">{student.regNo ?? "—"}</td>
+      <td className="td">{student.rollNo ?? "—"}</td>
+      <td className="td">{student.gender ?? "—"}</td>
+      <td className="td">{student.status}</td>
+      <td className="td space-x-2 whitespace-nowrap">
+        <button className="btn-ghost" onClick={onGuardians}>Guardians</button>
+        <button className="text-xs text-indigo-600" onClick={() => setEdit(true)}>Edit</button>
+        <button className="text-xs text-red-600" onClick={() => { if (confirm(`Delete ${student.fullName}?`)) del.mutate(); }}>Delete</button>
+        {err && <span className="text-xs text-red-600">{err}</span>}
+      </td>
+    </tr>
   );
 }
 
@@ -134,6 +170,10 @@ function GuardianLinker({ student, onClose }: { student: Student; onClose: () =>
     },
     onError: (e) => setErr(e instanceof Error ? e.message : "Failed"),
   });
+  const unlink = useMutation({
+    mutationFn: (linkId: string) => api(`/student-guardians/${linkId}`, { method: "DELETE" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["student-guardians", student.id] }),
+  });
 
   return (
     <div className="fixed inset-0 grid place-items-center bg-black/30 p-4" onClick={onClose}>
@@ -146,9 +186,10 @@ function GuardianLinker({ student, onClose }: { student: Student; onClose: () =>
           {links.data?.map((l) => {
             const g = guardians.data?.content.find((x) => x.id === l.guardianId);
             return (
-              <li key={l.id} className="flex justify-between rounded border border-slate-200 px-2 py-1">
+              <li key={l.id} className="flex items-center justify-between rounded border border-slate-200 px-2 py-1">
                 <span>{g?.fullName ?? l.guardianId}</span>
-                <span className="text-slate-500">{l.relation}</span>
+                <span className="flex items-center gap-2"><span className="text-slate-500">{l.relation}</span>
+                  <button className="text-xs text-red-600" onClick={() => unlink.mutate(l.id)}>✕</button></span>
               </li>
             );
           })}

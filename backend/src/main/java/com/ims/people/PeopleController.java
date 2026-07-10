@@ -66,6 +66,13 @@ public class PeopleController {
         return peopleService.updateStudent(id, req);
     }
 
+    @DeleteMapping("/students/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize(ADMIN)
+    public void deleteStudent(@PathVariable UUID id) {
+        peopleService.deleteStudent(id);
+    }
+
     // ---- Student <-> Guardian links ----
     @PostMapping("/students/{studentId}/guardians")
     @ResponseStatus(HttpStatus.CREATED)
@@ -110,6 +117,13 @@ public class PeopleController {
         return peopleService.updateTeacher(id, req);
     }
 
+    @DeleteMapping("/teachers/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize(ADMIN)
+    public void deleteTeacher(@PathVariable UUID id) {
+        peopleService.deleteTeacher(id);
+    }
+
     // ---- Guardians ----
     @PostMapping("/guardians")
     @ResponseStatus(HttpStatus.CREATED)
@@ -123,9 +137,21 @@ public class PeopleController {
         return peopleService.listGuardians(q, pageable);
     }
 
+    @GetMapping("/guardians/{id}")
+    public GuardianResponse getGuardian(@PathVariable UUID id) {
+        return peopleService.getGuardian(id);
+    }
+
     @PutMapping("/guardians/{id}")
     @PreAuthorize(ADMIN)
     public GuardianResponse updateGuardian(@PathVariable UUID id, @Valid @RequestBody UpdateGuardian req) {
         return peopleService.updateGuardian(id, req);
+    }
+
+    @DeleteMapping("/guardians/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize(ADMIN)
+    public void deleteGuardian(@PathVariable UUID id) {
+        peopleService.deleteGuardian(id);
     }
 }

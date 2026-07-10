@@ -9,4 +9,6 @@ public interface StudentGuardianRepository extends JpaRepository<StudentGuardian
     List<StudentGuardian> findByStudentId(UUID studentId);
     List<StudentGuardian> findByGuardianId(UUID guardianId);
     boolean existsByStudentIdAndGuardianId(UUID studentId, UUID guardianId);
+    void deleteByStudentId(UUID studentId);
+    void deleteByGuardianId(UUID guardianId);
 }

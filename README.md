@@ -12,7 +12,11 @@ filter (queries) plus a `TenantGuard` on primary-key loads.
 - Certificates export to **PDF** (`GET /api/certificates/{id}/pdf`).
 - Institute (tenant root), created by super-admin together with its first admin.
 - Academic year, grade/class, section (with class-teacher assignment).
-- People: student, teacher (designation: headmaster … PT), guardian, student↔guardian links (relation type).
+- People: full CRUD for student, teacher (designation: headmaster … PT), and guardian
+  (create/list/search/get/update/delete), plus student↔guardian links (relation type).
+- **Soft delete everywhere**: deletes never remove data. Hibernate `@SoftDelete` (on `BaseEntity`)
+  turns every delete into `UPDATE deleted = true` and filters `deleted = false` on all reads, so
+  records are archived for the life of the system and stay queryable in the database.
 - Admission: student → year/grade/section, status workflow.
 - Exam/evaluation: subjects, exam types, exams, marks (per subject, upsert), and a computed
   **marksheet/result** (per-subject grade, totals, percentage, GPA, letter, pass/fail, class rank).

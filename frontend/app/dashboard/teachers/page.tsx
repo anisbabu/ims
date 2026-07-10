@@ -57,28 +57,65 @@ export default function TeachersPage() {
       <div className="card overflow-x-auto p-0">
         <table className="min-w-full divide-y divide-slate-200">
           <thead className="bg-slate-50">
-            <tr>
-              <th className="th">Name</th>
-              <th className="th">Designation</th>
-              <th className="th">Phone</th>
-              <th className="th">Status</th>
-            </tr>
+            <tr><th className="th">Name</th><th className="th">Designation</th><th className="th">Phone</th><th className="th">Status</th><th className="th">Actions</th></tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {list.data?.content.map((t) => (
-              <tr key={t.id}>
-                <td className="td font-medium">{t.fullName}</td>
-                <td className="td">{t.designation}</td>
-                <td className="td">{t.phone ?? "—"}</td>
-                <td className="td">{t.status}</td>
-              </tr>
+              <TeacherRow key={t.id} teacher={t} onChange={() => qc.invalidateQueries({ queryKey: ["teachers"] })} />
             ))}
             {list.data && list.data.content.length === 0 && (
-              <tr><td className="td text-slate-400" colSpan={4}>No teachers yet.</td></tr>
+              <tr><td className="td text-slate-400" colSpan={5}>No teachers yet.</td></tr>
             )}
           </tbody>
         </table>
       </div>
     </div>
+  );
+}
+
+function TeacherRow({ teacher, onChange }: { teacher: Teacher; onChange: () => void }) {
+  const [edit, setEdit] = useState(false);
+  const [f, setF] = useState({ fullName: teacher.fullName, designation: teacher.designation, phone: teacher.phone ?? "", status: teacher.status });
+  const [err, setErr] = useState<string | null>(null);
+
+  const save = useMutation({
+    mutationFn: () => api(`/teachers/${teacher.id}`, { method: "PUT", body: JSON.stringify(f) }),
+    onSuccess: () => { setEdit(false); setErr(null); onChange(); },
+    onError: (e) => setErr(e instanceof Error ? e.message : "Failed"),
+  });
+  const del = useMutation({
+    mutationFn: () => api(`/teachers/${teacher.id}`, { method: "DELETE" }),
+    onSuccess: onChange,
+    onError: (e) => setErr(e instanceof Error ? e.message : "Failed"),
+  });
+
+  if (edit) {
+    return (
+      <tr>
+        <td className="td"><input className="input" value={f.fullName} onChange={(e) => setF({ ...f, fullName: e.target.value })} /></td>
+        <td className="td"><select className="input" value={f.designation} onChange={(e) => setF({ ...f, designation: e.target.value })}>{DESIGNATIONS.map((d) => <option key={d}>{d}</option>)}</select></td>
+        <td className="td"><input className="input max-w-[8rem]" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></td>
+        <td className="td"><select className="input" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}><option>ACTIVE</option><option>INACTIVE</option></select></td>
+        <td className="td space-x-2 whitespace-nowrap">
+          <button className="text-xs text-indigo-600" onClick={() => save.mutate()}>Save</button>
+          <button className="text-xs text-slate-500" onClick={() => setEdit(false)}>Cancel</button>
+          {err && <span className="text-xs text-red-600">{err}</span>}
+        </td>
+      </tr>
+    );
+  }
+
+  return (
+    <tr>
+      <td className="td font-medium">{teacher.fullName}</td>
+      <td className="td">{teacher.designation}</td>
+      <td className="td">{teacher.phone ?? "—"}</td>
+      <td className="td">{teacher.status}</td>
+      <td className="td space-x-2 whitespace-nowrap">
+        <button className="text-xs text-indigo-600" onClick={() => setEdit(true)}>Edit</button>
+        <button className="text-xs text-red-600" onClick={() => { if (confirm(`Delete ${teacher.fullName}?`)) del.mutate(); }}>Delete</button>
+        {err && <span className="text-xs text-red-600">{err}</span>}
+      </td>
+    </tr>
   );
 }

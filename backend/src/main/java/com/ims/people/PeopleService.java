@@ -90,6 +90,13 @@ public class PeopleService {
         return StudentResponse.from(s);
     }
 
+    @Transactional
+    public void deleteStudent(UUID id) {
+        Student s = requireStudent(id);
+        studentGuardianRepository.deleteByStudentId(id);
+        studentRepository.delete(s);
+    }
+
     private Student requireStudent(UUID id) {
         return studentRepository.findById(id).map(TenantGuard::owned)
                 .orElseThrow(() -> new NotFoundException("Student not found"));
@@ -139,6 +146,12 @@ public class PeopleService {
         return TeacherResponse.from(t);
     }
 
+    @Transactional
+    public void deleteTeacher(UUID id) {
+        Teacher t = requireTeacher(id);
+        teacherRepository.delete(t);
+    }
+
     private Teacher requireTeacher(UUID id) {
         return teacherRepository.findById(id).map(TenantGuard::owned)
                 .orElseThrow(() -> new NotFoundException("Teacher not found"));
@@ -165,16 +178,32 @@ public class PeopleService {
         return PageResponse.from(page, GuardianResponse::from);
     }
 
+    @Transactional(readOnly = true)
+    public GuardianResponse getGuardian(UUID id) {
+        return GuardianResponse.from(requireGuardian(id));
+    }
+
     @Transactional
     public GuardianResponse updateGuardian(UUID id, UpdateGuardian req) {
-        Guardian g = guardianRepository.findById(id).map(TenantGuard::owned)
-                .orElseThrow(() -> new NotFoundException("Guardian not found"));
+        Guardian g = requireGuardian(id);
         if (req.fullName() != null) g.setFullName(req.fullName());
         if (req.phone() != null) g.setPhone(req.phone());
         if (req.email() != null) g.setEmail(req.email());
         if (req.occupation() != null) g.setOccupation(req.occupation());
         if (req.address() != null) g.setAddress(req.address());
         return GuardianResponse.from(g);
+    }
+
+    @Transactional
+    public void deleteGuardian(UUID id) {
+        Guardian g = requireGuardian(id);
+        studentGuardianRepository.deleteByGuardianId(id);
+        guardianRepository.delete(g);
+    }
+
+    private Guardian requireGuardian(UUID id) {
+        return guardianRepository.findById(id).map(TenantGuard::owned)
+                .orElseThrow(() -> new NotFoundException("Guardian not found"));
     }
 
     // ---- Student-Guardian links ----
